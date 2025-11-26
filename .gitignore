@@ -1,13 +1,13 @@
+# IDE / Project files
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
 .DS_Store
+
+# Игнорировать весь каталог .idea (включая все подпапки и файлы)
+/.idea/
+
+# Build artifacts
 /build
 /captures
 .externalNativeBuild
