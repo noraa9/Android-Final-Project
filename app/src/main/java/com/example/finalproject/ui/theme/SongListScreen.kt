@@ -57,23 +57,30 @@ fun SongListScreen(
              modifier =  Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
             )
-        Column(Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(
                 text="Explorer Artist",
                 fontSize = 20.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(top = 44.dp, bottom = 16.dp)
-                    .align(Alignment.CenterHorizontally)
+                modifier = Modifier.padding(top = 44.dp, bottom = 16.dp)
             )
             if (!permissionState.status.isGranted) {
-                Button(onClick = { permissionState.launchPermissionRequest()},
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                Button(
+                    onClick = { permissionState.launchPermissionRequest() },
+                    modifier = Modifier.padding(vertical = 16.dp)
                 ) {
                     Text("Permission to Musics")
                 }
             }
+            SongList(
+                songs = songState.value,
+                onSongCLick = {pos->onSongClick(songState.value, pos)},
+                modifier = Modifier.weight(1f)
+            )
 
         }
     }

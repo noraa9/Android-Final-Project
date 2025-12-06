@@ -29,7 +29,6 @@ import java.nio.file.WatchEvent
 fun SplashScreen(onStartClick: () -> Unit={}) {
     Box(modifier =
         Modifier
-            .fillMaxSize()
             .fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.intro_pic),
