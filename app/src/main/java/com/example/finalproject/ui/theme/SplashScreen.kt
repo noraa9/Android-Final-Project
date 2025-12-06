@@ -22,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.finalproject.R
-import java.nio.file.WatchEvent
 
 @Composable
 @Preview
@@ -31,10 +30,11 @@ fun SplashScreen(onStartClick: () -> Unit={}) {
         Modifier
             .fillMaxSize()) {
         Image(
-            painter = painterResource(id = R.drawable.intro_pic),
+            painter = painterResource(id = R.drawable.bgcat),
             contentDescription = null,
             modifier = Modifier
-                .align(Alignment.TopCenter),
+                .align(Alignment.TopCenter)
+                .fillMaxSize(),
             contentScale = ContentScale.Crop
         )
 
@@ -49,6 +49,7 @@ fun SplashScreen(onStartClick: () -> Unit={}) {
             ), shape = RoundedCornerShape(25.dp)
 
         ) {
+
             Text(
                 text = stringResource(R.string.get_started),
                 fontSize = 20.sp,
