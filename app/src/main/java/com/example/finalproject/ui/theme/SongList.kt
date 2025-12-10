@@ -1,6 +1,5 @@
 package com.example.finalproject.ui.theme
 
-import android.R.attr.onClick
 import android.content.ContentUris
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -14,6 +13,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,24 +30,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.finalproject.R
-import com.example.finalproject.data.Song
+import com.example.finalproject.domain.model.Song
 
 @Composable
 fun SongList(
-    songs:List<Song>,
-    onSongCLick:(Int)-> Unit,
+    songs: List<Song>,
+    onSongClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier.fillMaxWidth()
     ) {
-        itemsIndexed(songs) {
-            index,song->
+        itemsIndexed(songs) { index, song ->
             SongListItem(
-                song=song,
-                onClick={onSongCLick(index)}
+                song = song,
+                onClick = { onSongClick(index) }
             )
-
         }
     }
 }
@@ -76,7 +76,9 @@ fun SongListItem(song: Song, onClick: () -> Unit) {
             error = painterResource(R.drawable.baseline_music_note_24),
             placeholder = painterResource(R.drawable.baseline_music_note_24)
         )
-        Column (modifier = Modifier.padding(start = 12.dp)){
+        Column (modifier = Modifier
+            .weight(1f)
+            .padding(start = 12.dp)){
             Text(song.title.orEmpty(),
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
@@ -90,6 +92,16 @@ fun SongListItem(song: Song, onClick: () -> Unit) {
                 fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
+            )
+        }
+        if (song.isFavorite) {
+            Icon(
+                imageVector = Icons.Default.Favorite,
+                contentDescription = "Favorite",
+                tint = Color(0xFFFF6B6B),
+                modifier = Modifier
+                    .size(24.dp)
+                    .padding(end = 8.dp)
             )
         }
     }

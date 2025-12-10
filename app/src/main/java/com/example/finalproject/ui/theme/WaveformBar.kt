@@ -1,6 +1,5 @@
 package com.example.finalproject.ui.theme
 
-import android.widget.ProgressBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -24,11 +23,10 @@ fun WaveformBar(
     values: IntArray,
     modifier: Modifier = Modifier,
     progress: Float = 0f,
-    onSeek: ((Float) -> Unit)?=null
+    onSeek: ((Float) -> Unit)? = null
 ) {
     val color = Color.White
     val backgroundColor = Color.White.copy(alpha = 0.2f)
-    var bars = values.size
 
     Box(modifier = modifier
         .pointerInput(Unit) {
@@ -48,18 +46,19 @@ fun WaveformBar(
                 .fillMaxSize()
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
-        ) { values.forEachIndexed { index, v ->
-            val progressIndex = (values.size * progress).toInt()
-            val barColor = if (index <= progressIndex) color else backgroundColor
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 1.dp)
-                    .weight(1f)
-                    .height((v.dp * 1.1f).coerceAtLeast(4.dp))
-                    .background(barColor, shape = RoundedCornerShape(4.dp))
-                    .padding(horizontal = 1.dp)
-            )
-          }
+        ) {
+            values.forEachIndexed { index, v ->
+                val progressIndex = (values.size * progress).toInt()
+                val barColor = if (index <= progressIndex) color else backgroundColor
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 1.dp)
+                        .weight(1f)
+                        .height((v.dp * 1.1f).coerceAtLeast(4.dp))
+                        .background(barColor, shape = RoundedCornerShape(4.dp))
+                        .padding(horizontal = 1.dp)
+                )
+            }
         }
     }
 }
