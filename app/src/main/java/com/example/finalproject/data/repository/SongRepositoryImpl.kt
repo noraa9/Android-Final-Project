@@ -24,6 +24,22 @@ class SongRepositoryImpl @Inject constructor(
         
         val songs = mutableListOf<Song>()
         val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        
+        // Разрешенные расширения музыкальных файлов
+        val musicExtensions = setOf(".mp3", ".m4a", ".flac", ".wav", ".ogg", ".aac", ".wma", ".opus")
+        
+        // Папки, которые нужно исключить (системные папки с аудио)
+        val excludedFolders = setOf(
+            "/Notifications/",
+            "/Ringtones/",
+            "/Alarms/",
+            "/notifications/",
+            "/ringtones/",
+            "/alarms/",
+            "/Android/data/",
+            "/Android/obb/"
+        )
+        
         val selection = "${MediaStore.Audio.Media.IS_MUSIC}!=0"
         val sortOrder = "${MediaStore.Audio.Media.TITLE} ASC"
         
@@ -32,7 +48,8 @@ class SongRepositoryImpl @Inject constructor(
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
             MediaStore.Audio.Media.DATA,
-            MediaStore.Audio.Media.ALBUM_ID
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.DURATION
         )
         
         context.contentResolver.query(
@@ -43,12 +60,31 @@ class SongRepositoryImpl @Inject constructor(
             val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
             val dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
             val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
+            val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             
             while (cursor.moveToNext()) {
+                val data = cursor.getString(dataCol)
+                
+                // Пропускаем файлы из системных папок
+                if (data == null || excludedFolders.any { data.contains(it, ignoreCase = true) }) {
+                    continue
+                }
+                
+                // Пропускаем файлы без подходящего расширения
+                val fileExtension = data.substringAfterLast('.', "").lowercase()
+                if (fileExtension.isEmpty() || !musicExtensions.contains(".$fileExtension")) {
+                    continue
+                }
+                
+                // Пропускаем слишком короткие файлы (меньше 10 секунд) - обычно это не музыка
+                val duration = cursor.getLong(durationCol)
+                if (duration > 0 && duration < 10000) { // меньше 10 секунд
+                    continue
+                }
+                
                 val id = cursor.getLong(idCol)
                 val title = cursor.getString(titleCol)
                 val artist = cursor.getString(artistCol)
-                val data = cursor.getString(dataCol)
                 val album = cursor.getLong(albumCol)
                 val isFavorite = favoriteIds.contains(id)
                 

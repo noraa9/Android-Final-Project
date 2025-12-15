@@ -44,9 +44,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.finalproject.R
@@ -65,7 +63,9 @@ fun PlayerScreen(
 ) {
     val context = LocalContext.current
     val playerState by viewModel.playerState.collectAsState()
-    val exoPlayer = remember { ExoPlayer.Builder(context).build() }
+    // Получаем ExoPlayer из PlayerManager через ViewModel
+    val playerManager = viewModel.playerManager
+    val exoPlayer = remember { playerManager.getPlayer() }
     val waveform = remember { getWaveForm() }
 
     // Создаем ключ на основе ID выбранной песни и индекса для гарантированного перезапуска
@@ -76,20 +76,9 @@ fun PlayerScreen(
     LaunchedEffect(key1 = initKey) {
         if (songList.isEmpty()) return@LaunchedEffect
         viewModel.initialize(songList, initialIndex)
-        val song = songList.getOrNull(initialIndex)
-        if (song != null) {
-            exoPlayer.stop()
-            exoPlayer.clearMediaItems()
-            exoPlayer.setMediaItem(MediaItem.fromUri(song.data))
-            exoPlayer.prepare()
-            exoPlayer.playWhenReady = true
-            viewModel.setCurrentSong(song, initialIndex)
-        }
+        // PlayerManager уже играет песню через initialize
     }
 
-    // Отслеживаем последний ID воспроизводимой песни
-    var lastPlayedSongId by remember { mutableStateOf<Long?>(null) }
-    
     // Реагируем на изменение текущей песни (next/previous/shuffle)
     LaunchedEffect(key1 = playerState.currentIndex, key2 = playerState.isShuffle) {
         if (songList.isEmpty()) return@LaunchedEffect
@@ -97,25 +86,7 @@ fun PlayerScreen(
         
         val list = if (playerState.isShuffle) playerState.shuffledList else songList
         val song = list.getOrNull(playerState.currentIndex) ?: return@LaunchedEffect
-        
-        // Переключаем только если ID песни действительно изменился
-        if (song.id != lastPlayedSongId) {
-            lastPlayedSongId = song.id
-            exoPlayer.stop()
-            exoPlayer.clearMediaItems()
-            exoPlayer.setMediaItem(MediaItem.fromUri(song.data))
-            exoPlayer.prepare()
-            exoPlayer.playWhenReady = playerState.isPlaying
-            viewModel.setCurrentSong(song, playerState.currentIndex)
-        }
-    }
-    
-    // Инициализируем lastPlayedSongId при первой инициализации
-    LaunchedEffect(key1 = initKey) {
-        val initialSong = songList.getOrNull(initialIndex)
-        if (initialSong != null) {
-            lastPlayedSongId = initialSong.id
-        }
+        // PlayerManager уже обновлен через next()/previous() в ViewModel
     }
 
     DisposableEffect(exoPlayer) {
@@ -129,19 +100,31 @@ fun PlayerScreen(
                     viewModel.setDuration(exoPlayer.duration)
                 }
                 if (playbackState == Player.STATE_ENDED) {
-                    val list = if (playerState.isShuffle) playerState.shuffledList else songList
-                    val nextIndex = (playerState.currentIndex + 1) % list.size
-                    viewModel.setCurrentSong(list.getOrNull(nextIndex), nextIndex)
+                    viewModel.next()
                 }
             }
         }
-        exoPlayer.addListener(listener)
+        playerManager.addListener(listener)
         onDispose {
-            exoPlayer.removeListener(listener)
-            exoPlayer.release()
+            playerManager.removeListener(listener)
+            // НЕ освобождаем player, так как он должен работать в фоне
         }
     }
 
+    // Синхронизируем начальную позицию сразу после инициализации
+    LaunchedEffect(key1 = initKey) {
+        if (songList.isEmpty()) return@LaunchedEffect
+        // Небольшая задержка для того, чтобы ExoPlayer успел загрузить метаданные
+        delay(100)
+        val currentPosition = exoPlayer.currentPosition
+        val duration = exoPlayer.duration
+        if (duration > 0 && currentPosition > 0) {
+            viewModel.setElapsed(currentPosition)
+            viewModel.setDuration(duration)
+            viewModel.setWaveformProgress(currentPosition.toFloat() / duration)
+        }
+    }
+    
     LaunchedEffect(playerState.isPlaying) {
         while (playerState.isPlaying) {
             val currentPosition = exoPlayer.currentPosition
@@ -333,7 +316,7 @@ fun PlayerScreen(
 
                 IconButton(
                     onClick = {
-                        if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
+                        if (exoPlayer.isPlaying) playerManager.pause() else playerManager.play()
                     },
                     modifier = Modifier
                         .size(64.dp)

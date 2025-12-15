@@ -17,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    val playerManager: com.example.finalproject.service.PlayerManager
 ) : ViewModel() {
     
     private val _playerState = MutableStateFlow(PlayerState())
@@ -28,12 +29,24 @@ class PlayerViewModel @Inject constructor(
     fun initialize(songs: List<Song>, initialIndex: Int) {
         songList = songs
         val song = songs.getOrNull(initialIndex)
+        // Используем PlayerManager для воспроизведения
+        if (song != null) {
+            playerManager.play(songs, initialIndex)
+        }
+        
+        // Синхронизируем текущую позицию из PlayerManager (если песня уже играла)
+        val exoPlayer = playerManager.getPlayer()
+        val currentPosition = exoPlayer.currentPosition
+        val duration = exoPlayer.duration
+        val progress = if (duration > 0) currentPosition.toFloat() / duration else 0f
+        
         _playerState.value = _playerState.value.copy(
             currentIndex = initialIndex,
             currentSong = song,
-            elapsed = 0L,
-            duration = 0L,
-            waveformProgress = 0f,
+            elapsed = currentPosition,
+            duration = duration,
+            waveformProgress = progress,
+            isPlaying = exoPlayer.isPlaying,
             isShuffle = false,
             isRepeat = false,
             shuffledList = emptyList()
@@ -81,6 +94,8 @@ class PlayerViewModel @Inject constructor(
             songList
         }
         val nextIndex = (_playerState.value.currentIndex + 1) % list.size
+        // Используем PlayerManager
+        playerManager.play(list, nextIndex)
         _playerState.value = _playerState.value.copy(
             currentIndex = nextIndex,
             currentSong = list.getOrNull(nextIndex)
@@ -98,6 +113,8 @@ class PlayerViewModel @Inject constructor(
         } else {
             _playerState.value.currentIndex - 1
         }
+        // Используем PlayerManager
+        playerManager.play(list, prevIndex)
         _playerState.value = _playerState.value.copy(
             currentIndex = prevIndex,
             currentSong = list.getOrNull(prevIndex)

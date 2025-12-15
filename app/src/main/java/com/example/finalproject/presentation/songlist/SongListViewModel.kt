@@ -25,7 +25,8 @@ data class SongListUiState(
     val favoriteSongs: List<Song> = emptyList(),
     val currentTab: SongListTab = SongListTab.ALL,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val searchQuery: String = ""
 )
 
 @HiltViewModel
@@ -39,9 +40,22 @@ class SongListViewModel @Inject constructor(
     val uiState: StateFlow<SongListUiState> = _uiState.asStateFlow()
     
     val displayedSongs: List<Song>
-        get() = when (_uiState.value.currentTab) {
-            SongListTab.ALL -> _uiState.value.allSongs
-            SongListTab.FAVORITE -> _uiState.value.favoriteSongs
+        get() {
+            val songs = when (_uiState.value.currentTab) {
+                SongListTab.ALL -> _uiState.value.allSongs
+                SongListTab.FAVORITE -> _uiState.value.favoriteSongs
+            }
+            
+            // Применяем поисковый фильтр
+            val query = _uiState.value.searchQuery.lowercase().trim()
+            return if (query.isEmpty()) {
+                songs
+            } else {
+                songs.filter { song ->
+                    song.title?.lowercase()?.contains(query) == true ||
+                    song.artist?.lowercase()?.contains(query) == true
+                }
+            }
         }
     
     fun loadSongs() {
@@ -105,6 +119,10 @@ class SongListViewModel @Inject constructor(
             toggleFavoriteUseCase(song)
             updateFavoriteSongs()
         }
+    }
+    
+    fun updateSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = query)
     }
 }
 
