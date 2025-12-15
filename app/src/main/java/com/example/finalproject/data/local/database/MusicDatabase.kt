@@ -1,8 +1,7 @@
 package com.example.finalproject.data.local.database
 
-import android.content.Context
+
 import androidx.room.Database
-import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.finalproject.data.local.dao.FavoriteDao
 import com.example.finalproject.data.local.entity.FavoriteSongEntity
